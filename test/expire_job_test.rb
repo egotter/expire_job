@@ -1,11 +1,25 @@
 require "test_helper"
 
 class ExpireJobTest < Minitest::Test
-  def test_that_it_has_a_version_number
-    refute_nil ::ExpireJob::VERSION
+
+  class Worker
   end
 
-  def test_it_does_something_useful
-    assert false
+  class ExpireWorker
+    def expire_in(*args)
+      10
+    end
+  end
+
+  def test_worker_without_expiry
+    msg = {'args' => 'args', 'created_at' => Time.now.to_f}
+    result = ExpireJob::Middleware.new.call(Worker.new, msg) { 'result' }
+    assert result == 'result'
+  end
+
+  def test_worker_with_expiry
+    msg = {'args' => 'args', 'created_at' => Time.now.to_f}
+    result = ExpireJob::Middleware.new.call(ExpireWorker.new, msg) { 'result' }
+    assert result == 'result'
   end
 end
