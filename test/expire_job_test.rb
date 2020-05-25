@@ -17,11 +17,11 @@ class ExpireJobTest < Minitest::Test
 
   def test_call
     msg = {'args' => 'args', 'created_at' => Time.now.to_f}
-    result = ExpireJob::Middleware.new.call(Worker.new, msg) { 'result' }
+    result = ExpireJob::Middleware.new.call(Worker.new, msg, nil) { 'result' }
     assert result == 'result'
 
     msg = {'args' => 'args', 'created_at' => Time.now.to_f}
-    result = ExpireJob::Middleware.new.call(ExpireWorker.new, msg) { 'result' }
+    result = ExpireJob::Middleware.new.call(ExpireWorker.new, msg, nil) { 'result' }
     assert result == 'result'
   end
 

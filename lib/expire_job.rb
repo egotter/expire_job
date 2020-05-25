@@ -5,7 +5,7 @@ require "expire_job/version"
 
 module ExpireJob
   class Middleware
-    def call(worker, msg)
+    def call(worker, msg, queue, &block)
       if worker.respond_to?(:expire_in)
         picked_time = pick_enqueued_at(msg)
         parsed_time = parse_time(picked_time)
