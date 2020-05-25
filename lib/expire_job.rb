@@ -15,6 +15,7 @@ module ExpireJob
         else
           logger.info { "Expired job is skipped. args=#{truncate(msg['args'].inspect)}" }
           perform_callback(worker, :after_expire, msg['args'])
+          nil
         end
       else
         yield
