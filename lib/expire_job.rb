@@ -8,7 +8,8 @@ module ExpireJob
     def call(worker, msg)
       if worker.respond_to?(:expire_in)
         picked_time = pick_enqueued_at(msg)
-        if perform_expire_check(worker, msg['args'], worker.expire_in, picked_time)
+        parsed_time = parse_time(picked_time)
+        if perform_expire_check(worker, msg['args'], worker.expire_in, parsed_time)
           yield
         end
       else
@@ -38,7 +39,7 @@ module ExpireJob
       enqueued_at = nil
 
       if args.is_a?(Array) && args.size >= 1 && args.last.is_a?(Hash)
-        enqueued_at = parse_time(args.last['enqueued_at'])
+        enqueued_at = args.last['enqueued_at']
         logger.info { "enqueued_at was found in args. enqueued_at=#{enqueued_at}" } if enqueued_at
       end
 
@@ -46,7 +47,7 @@ module ExpireJob
         # The msg has both created_at and enqueued_at.
         #   created_at: is a time when #perform_async or #perform_in is called
         #   enqueued_at: is a time when the job is inserted into a queue
-        enqueued_at = parse_time(msg['created_at']) # TODO Use enqueued_at?
+        enqueued_at = msg['created_at'] # TODO Use enqueued_at?
         logger.debug { "enqueued_at was found in msg. enqueued_at=#{enqueued_at}" } if enqueued_at
       end
 
@@ -54,7 +55,6 @@ module ExpireJob
     end
 
     def parse_time(value)
-      puts value.inspect
       if value.to_s.match?(/\d+\.\d+/)
         Time.at(value)
       else
