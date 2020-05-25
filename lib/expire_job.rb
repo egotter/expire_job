@@ -9,25 +9,25 @@ module ExpireJob
       if worker.respond_to?(:expire_in)
         picked_time = pick_enqueued_at(msg)
         parsed_time = parse_time(picked_time)
-        if perform_expire_check(worker, msg['args'], worker.expire_in, parsed_time)
+
+        if perform_expire_check(worker.expire_in, parsed_time)
           yield
+        else
+          logger.info { "Expired job is skipped. args=#{truncate(msg['args'].inspect)}" }
+          perform_callback(worker, :after_expire, msg['args'])
         end
       else
         yield
       end
     end
 
-    def perform_expire_check(worker, args, expire_in, enqueued_at)
+    def perform_expire_check(expire_in, enqueued_at)
       if enqueued_at.nil?
-        logger.warn { "Can not expire this job because enqueued_at is not found. args=#{truncate(args.inspect)}" }
+        logger.warn { "Can not expire this job because enqueued_at is nil." }
         return true
       end
 
       if enqueued_at < Time.now - expire_in
-        logger.info { "Skip expired job. args=#{truncate(args.inspect)}" }
-
-        perform_callback(worker, :after_expire, args)
-
         false
       else
         true

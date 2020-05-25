@@ -26,6 +26,19 @@ class ExpireJobTest < Minitest::Test
   end
 
   def test_perform_expire_check
+    expire_in = ExpireWorker.new.expire_in
+
+    enqueued_at = nil
+    result = ExpireJob::Middleware.new.perform_expire_check(expire_in, enqueued_at)
+    assert result
+
+    enqueued_at = Time.now
+    result = ExpireJob::Middleware.new.perform_expire_check(expire_in, enqueued_at)
+    assert result
+
+    enqueued_at = Time.at(Time.now.to_i - (expire_in + 1))
+    result = ExpireJob::Middleware.new.perform_expire_check(expire_in, enqueued_at)
+    assert !result
   end
 
   def test_pick_enqueued_at
@@ -63,6 +76,11 @@ class ExpireJobTest < Minitest::Test
   end
 
   def test_truncate
+    result = ExpireJob::Middleware.new.truncate('a' * 10)
+    assert result == 'a' * 10
+
+    result = ExpireJob::Middleware.new.truncate('a' * 200)
+    assert result == 'a' * 100
   end
 
   def test_logger
