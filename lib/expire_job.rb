@@ -13,7 +13,7 @@ module ExpireJob
         if perform_expire_check(worker.expire_in, parsed_time)
           yield
         else
-          logger.info { "Expired job is skipped. args=#{truncate(msg['args'].inspect)}" }
+          logger.info { "[ExpireJob] Expired job is skipped. args=#{truncate(msg['args'].inspect)}" }
           perform_callback(worker, :after_expire, msg['args'])
           nil
         end
@@ -24,7 +24,7 @@ module ExpireJob
 
     def perform_expire_check(expire_in, enqueued_at)
       if enqueued_at.nil?
-        logger.warn { "Can not expire this job because enqueued_at is nil." }
+        logger.warn { "[ExpireJob] Can not expire this job because enqueued_at is nil." }
         return true
       end
 
@@ -41,7 +41,7 @@ module ExpireJob
 
       if args.is_a?(Array) && args.size >= 1 && args.last.is_a?(Hash)
         enqueued_at = args.last['enqueued_at']
-        logger.info { "enqueued_at was found in args. enqueued_at=#{enqueued_at}" } if enqueued_at
+        logger.info { "[ExpireJob] enqueued_at was found in args. enqueued_at=#{enqueued_at}" } if enqueued_at
       end
 
       if enqueued_at.nil?
@@ -49,7 +49,7 @@ module ExpireJob
         #   created_at: is a time when #perform_async or #perform_in is called
         #   enqueued_at: is a time when the job is inserted into a queue
         enqueued_at = msg['created_at'] # TODO Use enqueued_at?
-        logger.debug { "enqueued_at was found in msg. enqueued_at=#{enqueued_at}" } if enqueued_at
+        logger.debug { "[ExpireJob] enqueued_at was found in msg. enqueued_at=#{enqueued_at}" } if enqueued_at
       end
 
       enqueued_at
@@ -62,7 +62,7 @@ module ExpireJob
         Time.parse(value)
       end
     rescue => e
-      logger.warn { "Can not parse this value. value=#{value.inspect}" }
+      logger.warn { "[ExpireJob] Can not parse this value. value=#{value.inspect}" }
       nil
     end
 
@@ -77,8 +77,7 @@ module ExpireJob
             worker.send(callback_name, *args)
           end
         rescue ArgumentError => e
-          message = "The number of parameters of the callback method (#{parameters.size}) is not the same as the number of arguments (#{args.size})"
-          raise ArgumentError.new("#{self.class}:#{worker.class} #{message} callback_name=#{callback_name} args=#{args.inspect} parameters=#{parameters.inspect}")
+          raise ArgumentError.new("[ExpireJob] Invalid parameters callback_name=#{callback_name}")
         end
       end
     end
